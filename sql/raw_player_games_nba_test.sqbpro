@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/User/OneDrive/Documents/Coding/nba-form-analysis/sql/raw_player_games_nba.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="125"/><column_width id="3" width="10260"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,12:mainplayer_games"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="player_game" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="82"/><column index="2" value="82"/><column index="3" value="153"/><column index="4" value="77"/><column index="5" value="148"/><column index="6" value="149"/><column index="7" value="68"/><column index="8" value="87"/><column index="9" value="83"/><column index="10" value="42"/><column index="11" value="42"/><column index="12" value="42"/><column index="13" value="42"/><column index="14" value="55"/><column index="15" value="43"/><column index="16" value="42"/><column index="17" value="63"/><column index="18" value="42"/><column index="19" value="89"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="player_game_features" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths/><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="player_games" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="82"/><column index="2" value="82"/><column index="3" value="153"/><column index="4" value="77"/><column index="5" value="148"/><column index="6" value="149"/><column index="7" value="68"/><column index="8" value="87"/><column index="9" value="83"/><column index="10" value="42"/><column index="11" value="42"/><column index="12" value="42"/><column index="13" value="42"/><column index="14" value="55"/><column index="15" value="43"/><column index="16" value="42"/><column index="17" value="63"/><column index="18" value="42"/><column index="19" value="89"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">SELECT * FROM player_games 
+WHERE GAME_DATE &lt; '2024-10-24'
+ORDER BY TEAM_ABBREVIATION;
+
+ </sql><sql name="SQL 1 (1)">SELECT PLAYER_ID, PLAYER_NAME,TEAM_ABBREVIATION, MATCHUP, GAME_DATE, GAME_ID
+MIN, FG3M,
+AVG(FG3M) OVER (
+ PARTITION BY PLAYER_ID --Grouping results by player
+ ORDER BY GAME_DATE, GAME_ID --Ordering by the game date and identifier of the game for complete ordering purposes
+ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  -- Gets the average FG3M from all the rows before and on the current row
+ ) AS CUM_AVG_3_POINTERS_MADE
+FROM player_games
+WHERE GAME_DATE &lt; '2024-11-24'
+ORDER BY PLAYER_ID,GAME_DATE, GAME_ID;
+
+ </sql><sql name="SQL 1 (2)">SELECT PLAYER_ID, PLAYER_NAME,TEAM_ABBREVIATION, MATCHUP, GAME_DATE, GAME_ID,
+MIN AS MINUTES, 
+FG3M, FG3A,
+SUM(FG3A) OVER prev5 AS prev5_sum_fg3a,
+SUM(FG3M) OVER prev5 AS prev5_sum_fg3m,
+ CASE
+    WHEN SUM(FG3A) OVER prev5 = 0 THEN NULL -- Null if there is no preceding games so there is no crash when 3PA are 0. Don't want the denomminator to be 0
+    ELSE
+	1.0 * SUM(FG3M) OVER prev5 -- Converts the integer into a floating number too allow for division
+    / SUM(FG3A) OVER prev5
+  END AS prev5_3p_rate -- fg3m/fg3a = rate of 3's made
+FROM player_games
+WHERE GAME_DATE &lt; '2024-11-24'
+WINDOW prev5 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING -- Looks at up to the 5 previous rows based on the order by and the row preceding the current row. so simiply the 5 previous rows
+    )
+ORDER BY PLAYER_ID,GAME_DATE, GAME_ID;
+
+ </sql><sql name="SQL 1 (3)">
+WITH base AS (
+  SELECT
+    PLAYER_ID,
+    PLAYER_NAME,
+    TEAM_ABBREVIATION,
+    MATCHUP,
+    GAME_DATE,
+    GAME_ID,
+    MIN AS minutes,
+    FG3M,
+    FG3A,
+
+    -- Previous windows (exclude current game)
+    SUM(FG3M) OVER prev5  AS prev5_3pm,
+    SUM(FG3A) OVER prev5  AS prev5_3pa,
+    SUM(FG3M) OVER prev10 AS prev10_3pm,
+    SUM(FG3A) OVER prev10 AS prev10_3pa,
+    SUM(FG3M) OVER prev20 AS prev20_3pm,
+    SUM(FG3A) OVER prev20 AS prev20_3pa,
+	SUM(FG3M) OVER seasontodate  AS std_3pm,
+    SUM(FG3A) OVER seasontodate  AS std_3pa,
+
+    -- Next windows (exclude current game, look forward)
+    SUM(FG3M) OVER next5  AS next5_3pm,
+    SUM(FG3A) OVER next5  AS next5_3pa,
+    SUM(FG3M) OVER next10 AS next10_3pm,
+    SUM(FG3A) OVER next10 AS next10_3pa,
+    SUM(FG3M) OVER next20 AS next20_3pm,
+    SUM(FG3A) OVER next20 AS next20_3pa,
+	
+	--game counter
+	ROW_NUMBER() OVER (PARTITION BY PLAYER_ID ORDER BY GAME_DATE, GAME_ID)as game_counter
+
+  FROM player_games
+
+  WINDOW
+    prev5 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING
+    ),
+    prev10 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 10 PRECEDING AND 1 PRECEDING
+    ),
+    prev20 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING
+    ),
+    next5 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 5 FOLLOWING
+    ),
+    next10 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 10 FOLLOWING
+    ),
+    next20 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 20 FOLLOWING
+    ),
+	seasontodate AS (
+	  PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+	)
+)
+SELECT
+  *,
+  CASE WHEN prev5_3pa  IS NULL OR prev5_3pa  = 0 THEN NULL ELSE 1.0 * prev5_3pm  / prev5_3pa  END AS prev5_3p_rate,
+  CASE WHEN prev10_3pa IS NULL OR prev10_3pa = 0 THEN NULL ELSE 1.0 * prev10_3pm / prev10_3pa END AS prev10_3p_rate,
+  CASE WHEN prev20_3pa IS NULL OR prev20_3pa = 0 THEN NULL ELSE 1.0 * prev20_3pm / prev20_3pa END AS prev20_3p_rate,
+  CASE WHEN std_3pa IS NULL OR std_3pa = 0 THEN NULL ELSE 1.0 * std_3pm / std_3pa END AS std_3p_rate,
+
+  CASE WHEN next5_3pa  IS NULL OR next5_3pa  = 0 THEN NULL ELSE 1.0 * next5_3pm  / next5_3pa  END AS next5_3p_rate,
+  CASE WHEN next10_3pa IS NULL OR next10_3pa = 0 THEN NULL ELSE 1.0 * next10_3pm / next10_3pa END AS next10_3p_rate,
+  CASE WHEN next20_3pa IS NULL OR next20_3pa = 0 THEN NULL ELSE 1.0 * next20_3pm / next20_3pa END AS next20_3p_rate
+FROM base
+ORDER BY PLAYER_ID, GAME_DATE, GAME_ID;
+
+
+
+</sql><sql name="SQL 1 (4)">DROP VIEW IF EXISTS player_game_features;
+
+CREATE VIEW player_game_features AS
+WITH base AS (
+  SELECT
+    PLAYER_ID,
+    PLAYER_NAME,
+    GAME_DATE,
+    GAME_ID,
+    FG3M,
+    FG3A,
+
+    -- Previous windows (exclude current game)
+    SUM(FG3M) OVER prev5  AS prev5_3pm,
+    SUM(FG3A) OVER prev5  AS prev5_3pa,
+    SUM(FG3M) OVER prev10 AS prev10_3pm,
+    SUM(FG3A) OVER prev10 AS prev10_3pa,
+    SUM(FG3M) OVER prev20 AS prev20_3pm,
+    SUM(FG3A) OVER prev20 AS prev20_3pa,
+	SUM(FG3M) OVER seasontodate  AS std_3pm,
+    SUM(FG3A) OVER seasontodate  AS std_3pa,
+
+    -- Next windows (exclude current game, look forward)
+    SUM(FG3M) OVER next5  AS next5_3pm,
+    SUM(FG3A) OVER next5  AS next5_3pa,
+    SUM(FG3M) OVER next10 AS next10_3pm,
+    SUM(FG3A) OVER next10 AS next10_3pa,
+    SUM(FG3M) OVER next20 AS next20_3pm,
+    SUM(FG3A) OVER next20 AS next20_3pa
+
+  FROM player_games
+
+  WINDOW
+   prev5 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING
+    ),
+    prev10 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 10 PRECEDING AND 1 PRECEDING
+    ),
+    prev20 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING
+    ),
+    next5 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 5 FOLLOWING
+    ),
+    next10 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 10 FOLLOWING
+    ),
+    next20 AS (
+      PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN 1 FOLLOWING AND 20 FOLLOWING
+    ),
+	seasontodate AS (
+	  PARTITION BY PLAYER_ID
+      ORDER BY GAME_DATE, GAME_ID
+      ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+	)
+)
+SELECT * FROM base;
+
+
+SELECT std_3pm, std_3pa, prev10_3pm, next10_3pm
+FROM player_game_features
+LIMIT 5;
+
+</sql><current_tab id="4"/></tab_sql></sqlb_project>
