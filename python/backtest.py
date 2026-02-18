@@ -21,7 +21,7 @@ def load_features(db_path: str, table: str, n: int) -> pd.DataFrame: # takes in 
       FG3A,
       prev{n}_3pm, prev{n}_3pa,
       std_3pm, std_3pa,
-      next{n}_3pm, next{}b_3pa
+      next{n}_3pm, next{n}_3pa
     FROM {table}
     """
     df = pd.read_sql_query(query, conn)
@@ -31,9 +31,9 @@ def load_features(db_path: str, table: str, n: int) -> pd.DataFrame: # takes in 
     df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"]) # changes string value to datetime
     numeric_cols = [
         "FG3M", "FG3A",
-        f"prev{N}_3pm", f"prev{N}_3pa",
+        f"prev{n}_3pm", f"prev{n}_3pa",
         "std_3pm", "std_3pa",
-        f"next{N}_3pm", f"next{N}_3pa"
+        f"next{n}_3pm", f"next{n}_3pa"
     ]
     for c in numeric_cols:
         if c in df.columns:
