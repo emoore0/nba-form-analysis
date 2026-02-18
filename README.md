@@ -44,6 +44,12 @@ python backtest.py
 
 This will output Mean Absolute Error (MAE) comparisons for window sizes 5, 10 and 20 and give us a comparison of using recent form vs season to date.
 
+## How We Measure Accuracy
+
+To compare the two prediction methods we use MAE. 
+MAE tells us, on average, how many 3-pointers the model was off by.
+Lower MAE = better prediction.
+
 ## Project Structure
 
 ```
