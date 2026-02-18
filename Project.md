@@ -6,9 +6,9 @@ This project aims to explore the question: **"How does a player's recent 3-point
 
 This matters. It matters differently depending on who's asking.
 
-Fans mainly care about who's hot. A fan might say, "Steph is averaging 7 3PM over his last 5 games, he'll surely get at least 6 next game." Teams may care more about shot volume and player roles. A coach might wonder, "Reaves has been on a hot streak with 3PM but how much is Luka's absence inflating his volume?"
+Fans mainly care about who's hot. A fan might say, "Steph is averaging 7 3PM over his last 5 games, he'll surely get at least 6 next game." Teams may care more about shot volume and player roles. A coach might wonder, "Reaves has been on a hot streak with 3PM but how much is Doncic's absence inflating his volume?"
 
-We'll dive deep into the data and see how closely tethered recent form actually is to short-term and long-term output. The approach: use game-level player data, create useful features using SQL window functions and conduct evaluations in Python.
+We'll dive deep into the data and see how closely tied recent form actually is to short-term and long-term output. The approach: use game-level player data, create useful features using SQL window functions and conduct evaluations in Python.
 
 ---
 
@@ -16,7 +16,7 @@ We'll dive deep into the data and see how closely tethered recent form actually 
 
 Here's the core hypothesis, stated plainly:
 
-> "Given we already know the next N games' attempt volume, which rate estimate, season-to-date vs last-N-games — better predicts the next N 3-point makes?"
+> "Given we already know the next N games' attempt volume, which rate estimate, season-to-date vs last-N-games - better predicts the next N 3-point makes?"
 
 In other words: if we could peek into the future and see how many threes a player *attempts*, does their recent shooting percentage or their season-long percentage give us a better guess at how many they'll *make*?
 
@@ -141,7 +141,7 @@ The summary table will show something like:
 | 10     | ...     | ...          | ...        | ...                   |
 | 20     | ...     | ...          | ...        | ...                   |
 
-- The **higher** `recent_minus_baseline` is, the more accurate season-to-date rate is. Recent form is noise, more or less.
+- The **higher** `recent_minus_baseline` is, the more accurate season-to-date rate is.
 - The **lower** it is, the more recent form is actually carrying predictive signal beyond the seasonal average.
 - If it's near **zero**, they're roughly equivalent - which is itself an interesting finding.
 
@@ -159,6 +159,6 @@ This is a V1 - intentionally simple. Some natural extensions:
 
 ## Tools Used
 
-- **SQLite** for data storage and feature engineering (window functions are underrated)
+- **SQLite** for data storage and feature engineering
 - **Python 3** with `pandas` and `sqlite3` for prediction and evaluation
 - **DB Browser for SQLite** for exploratory SQL development

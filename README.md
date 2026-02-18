@@ -6,7 +6,7 @@ This project compares two simple prediction approaches: **season-to-date shootin
 
 ## How It Works
 
-1. **SQL view** (`player_game_features`) computes rolling window stats for every player-game: previous 5/10/20 game totals, season-to-date totals and next 5/10/20 game totals — all using window functions with the current game excluded.
+1. **SQL view** (`player_game_features`) computes rolling window stats for every player-game: previous 5/10/20 game totals, season-to-date totals and next 5/10/20 game totals. All using window functions with the current game excluded.
 
 2. **Python script** (`backtest.py`) loads the features, builds two predictions per row (baseline vs. recent form) and compares them using Mean Absolute Error.
 
@@ -29,7 +29,7 @@ cd nba-form-analysis
 # Install dependencies
 pip install pandas
 
-# Make sure your database is at the expected path, or update DB_PATH in the script
+# Make sure your database is at the expected path or update DB_PATH in the script
 ```
 
 ### Create the SQL View
@@ -42,7 +42,7 @@ Open your database in DB Browser for SQLite (or any SQLite client) and run the v
 python backtest.py
 ```
 
-This will output Mean Absolute Error (MAE) comparisons for window sizes 5, 10, and 20 and give us a comparison of using recent form vs season to date.
+This will output Mean Absolute Error (MAE) comparisons for window sizes 5, 10 and 20 and give us a comparison of using recent form vs season to date.
 
 ## Project Structure
 
@@ -59,6 +59,6 @@ nba-form-analysis/
 
 ## Key Concepts
 
-- **Season-to-date rate**: A player's cumulative 3P% heading into a game — the "who they are" estimate
-- **Recent-N rate**: Their 3P% over the last N games — the "hot hand" estimate
+- **Season-to-date rate**: A player's cumulative 3P% heading into a game - the "who they are" estimate
+- **Recent-N rate**: Their 3P% over the last N games - the "hot hand" estimate
 - **Both predictions use known future attempt volume**, so the comparison is purely about which *rate* is more predictive
