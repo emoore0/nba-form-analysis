@@ -2,11 +2,11 @@
 
 Can a player's recent 3-point shooting actually predict their next few games? Or is the "hot hand" mostly noise?
 
-This project compares two simple prediction approaches — **season-to-date shooting rate** vs. **recent N-game rate** — to see which better estimates a player's 3-point makes over their next N games. Spoiler: the answer might not be what the fans want to hear.
+This project compares two simple prediction approaches: **season-to-date shooting rate** vs **recent N-game rate** - to see which better estimates a player's 3-point makes over their next N games. Spoiler: the answer might not be what the fans want to hear.
 
 ## How It Works
 
-1. **SQL view** (`player_game_features`) computes rolling window stats for every player-game: previous 5/10/20 game totals, season-to-date totals, and next 5/10/20 game totals — all using window functions with the current game excluded.
+1. **SQL view** (`player_game_features`) computes rolling window stats for every player-game: previous 5/10/20 game totals, season-to-date totals and next 5/10/20 game totals — all using window functions with the current game excluded.
 
 2. **Python script** (`backtest.py`) loads the features, builds two predictions per row (baseline vs. recent form) and compares them using Mean Absolute Error.
 
