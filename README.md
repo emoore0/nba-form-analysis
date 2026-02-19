@@ -23,7 +23,7 @@ This project compares two simple prediction approaches: **season-to-date shootin
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/nba-form-analysis.git
+git clone https://github.com/emoore0/nba-form-analysis.git
 cd nba-form-analysis
 
 # Install dependencies
